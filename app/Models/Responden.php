@@ -13,7 +13,7 @@ class Responden extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['gender', 'age', 'education', 'job', 'village_id', 'domicile'];
+    protected $fillable = ['gender', 'age', 'education', 'job', 'village_id', 'domicile', 'email'];
 
     public function getRouteKeyName(): string
     {

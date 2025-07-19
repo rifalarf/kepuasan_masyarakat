@@ -81,8 +81,8 @@
             'label' => 'Garut',
         ],
         (object) [
-            'value' => 'LuarGarut',
-            'label' => 'LuarGarut',
+            'value' => 'Luar Garut',
+            'label' => 'Luar Garut',
         ],
     ];
 @endphp

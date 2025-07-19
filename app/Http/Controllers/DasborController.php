@@ -275,9 +275,9 @@ class DasborController extends Controller
         $dataGrafikDomisili = (object) [
             'series' => [
                 (int) number_format(getPercentage($dataRespondens->where('domicile', 'Garut')->count(), $dataRespondens->count()), 2),
-                (int) number_format(getPercentage($dataRespondens->where('domicile', 'LuarGarut')->count(), $dataRespondens->count()), 2)
+                (int) number_format(getPercentage($dataRespondens->where('domicile', 'Luar Garut')->count(), $dataRespondens->count()), 2)
             ],
-            'labels' => ['Garut', 'LuarGarut'],
+            'labels' => ['Garut', 'Luar Garut'],
             'total' => $dataRespondens->count(),
             'colors' => [$colors->red, $colors->blue]
         ];

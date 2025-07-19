@@ -167,10 +167,10 @@ function getRespondenDataExport($request)
   $chartDomisiliConfig = '{
             "type": "bar",
             "data": {
-              "labels": ["Garut", "LuarGarut"],
+              "labels": ["Garut", "Luar Garut"],
               "datasets": [{
                 "label": "Domisili",
-                "data": [' . $respondens->where('domicile', 'Garut')->count() . ', ' . $respondens->where('domicile', 'LuarGarut')->count() . ']
+                "data": [' . $respondens->where('domicile', 'Garut')->count() . ', ' . $respondens->where('domicile', 'Luar Garut')->count() . ']
               }]
             }
           }';            
