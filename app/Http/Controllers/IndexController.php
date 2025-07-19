@@ -114,12 +114,14 @@ class IndexController extends Controller
 
                 $validator = Validator::make($data, [
                     'step' => 'required',
+                    'question' => 'required',
                     'gender' => 'required',
-                    'age' => 'required|numeric|min:1|max:122',
+                    'age' => 'required|numeric|min:1|max:99',
                     'education' => 'required',
                     'job' => 'required',
                     'village' => 'required',
                     'domicile' => 'required',
+                    'email' => 'required|email', // Tambahkan validasi email
                 ]);
 
                 if ($validator->fails()) {
@@ -182,6 +184,7 @@ class IndexController extends Controller
                 'job' => $request->job,
                 'village_id' => $request->village,
                 'domicile' => $request->domicile,
+                'email' => $request->email, // Tambahkan baris ini
             ]);
 
             if($request->feedback) {
@@ -211,3 +214,4 @@ class IndexController extends Controller
         }
     }
 }
+
