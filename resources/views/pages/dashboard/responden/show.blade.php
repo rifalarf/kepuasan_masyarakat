@@ -27,8 +27,9 @@
                 </div>
                 <div class="flex flex-col py-3">
                     <dt class="mb-1 text-gray-500 dark:text-gray-400 md:text-lg">Tanggal/Waktu Pengisian Kuesioner</dt>
-                    <dd class="text-lg font-semibold">{{ \Carbon\Carbon::parse($responden->created_at)->format('d-m-Y') }} /
-                        {{ \Carbon\Carbon::parse($responden->created_at)->format('H:i:s') }} WITA</dd>
+                    <dd class="text-lg font-semibold">
+                        {{ \Carbon\Carbon::parse($responden->created_at)->timezone('Asia/Jakarta')->format('d-m-Y / H:i:s') }}
+                        WIB</dd>
                 </div>
                 <div class="flex flex-col py-3">
                     <dt class="mb-1 text-gray-500 dark:text-gray-400 md:text-lg">Tempat Tinggal</dt>
