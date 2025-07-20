@@ -1,4 +1,3 @@
-
 <div class="flex basis-full flex-col items-center space-y-12 rounded-lg border border-gray-200 bg-white px-5 py-20 text-center shadow dark:border-gray-700 dark:bg-gray-800">
 	<div class="flex w-full justify-center">
 		<x-link.button :href="$previous" icon="chevron-left" :disabled="$previous === '#' ? true : false" />
@@ -30,4 +29,101 @@
 			</div>
 		@endfor
 	</div>
+</div>
+
+<?php
+// ...existing code...
+        <div class="mb-5">
+            <label for="villages" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Satuan
+                Kerja</label>
+            <select id="villages" name="village"
+                class="searchable-select block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+                required>
+                <option value="" hidden>-Pilih-</option>
+                @foreach ($villages as $item)
+                    <option value="{{ $item->id }}" {{ old('village') == $item->id ? 'selected' : '' }}>
+                        {{ $item->name }}</option>
+                @endforeach
+            </select>
+            {{-- Elemen untuk menampilkan status ketersediaan --}}
+            <div id="village-status" class="mt-2 text-sm"></div>
+            @error('village')
+                <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <div class="mb-5">
+            <label for="name" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Nama
+                Lengkap</label>
+            <input type="text" id="name" name="name"
+                class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+                placeholder="Masukkan nama lengkap" value="{{ old('name') }}" required>
+            @error('name')
+                <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <div class="mb-5">
+            <label for="phone" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Nomor
+                Telepon</label>
+            <input type="tel" id="phone" name="phone"
+                class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+                placeholder="Masukkan nomor telepon" value="{{ old('phone') }}" required>
+            @error('phone')
+                <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <div class="mb-5">
+            <label for="email" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Alamat
+                Email</label>
+            <input type="email" id="email" name="email"
+                class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+                placeholder="Masukkan alamat email" value="{{ old('email') }}" required>
+            @error('email')
+                <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <div class="mb-5">
+            <label for="password" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Kata
+                Sandi</label>
+            <input type="password" id="password" name="password"
+                class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+                placeholder="Masukkan kata sandi" required>
+            @error('password')
+                <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <div class="mb-5">
+            <label for="password_confirmation" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Konfirmasi
+                Kata Sandi</label>
+            <input type="password" id="password_confirmation" name="password_confirmation"
+                class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+                placeholder="Konfirmasi kata sandi" required>
+        </div>
+
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <input id="terms" aria-describedby="terms" type="checkbox" name="terms"
+                    class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+                    required>
+                <label for="terms" class="ml-2 block text-sm text-gray-900 dark:text-white">
+                    Saya setuju dengan <a href="#" class="font-medium text-blue-600 hover:underline dark:text-blue-500">syarat
+                        dan ketentuan</a>
+                </label>
+            </div>
+        </div>
+
+        <button type="submit"
+            class="mt-4 w-full rounded-lg bg-blue-600 px-5 py-2.5 text-center text-sm font-medium text-white shadow-md transition-all duration-200 hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-500 dark:hover:bg-blue-600 dark:focus:ring-blue-700">
+            Daftar
+        </button>
+
+        <p class="mt-4 text-center text-sm text-gray-500 dark:text-gray-400">
+            Sudah punya akun? <a href="{{ route('login') }}" class="font-medium text-blue-600 hover:underline dark:text-blue-500">Masuk
+            </a>
+        </p>
+    </form>
 </div>

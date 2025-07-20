@@ -11,12 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('villages', function (Blueprint $table) {
-            $table->id();
-            $table->uuid('uuid')->unique();
-            $table->string('name', 100); // Ubah dari 'village' menjadi 'name'
-            $table->tinyInteger('allowDelete')->default(0);
-            $table->timestamps();
+        Schema::table('kuesioners', function (Blueprint $table) {
+            $table->foreignId('village_id')->nullable()->constrained()->after('unsur_id');
         });
     }
 
@@ -25,6 +21,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('villages');
+        Schema::table('kuesioners', function (Blueprint $table) {
+            $table->dropForeign(['village_id']);
+            $table->dropColumn('village_id');
+        });
     }
 };

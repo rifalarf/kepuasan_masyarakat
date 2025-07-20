@@ -11,11 +11,14 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        User::factory()->create([
-            'name' => 'Admin 123',
-            'email' => 'admin123@gmail.com',
-            'password' => Hash::make('admin123'),
-            'avatar' => hash('sha256', strtolower(trim('admin123@gmail.com')))
-        ]);
+        User::updateOrCreate(
+            ['email' => 'admin123@gmail.com'], // Kunci untuk mencari pengguna
+            [
+                'name' => 'Admin Utama', // Data untuk dibuat atau diperbarui
+                'password' => Hash::make('admin123'),
+                'role' => 'admin', // Pastikan role admin utama diatur
+                'avatar' => hash('sha256', strtolower(trim('admin123@gmail.com')))
+            ]
+        );
     }
 }

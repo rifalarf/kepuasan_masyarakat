@@ -10,10 +10,15 @@ use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
+    /**
+     * Seed the application's database.
+     */
     public function run(): void
     {
-        $this->call(UserSeeder::class);
-        $this->call(VillageSeeder::class);
-        $this->call(UnsurSeeder::class);
+        $this->call([
+            UserSeeder::class,
+            UnsurSeeder::class,
+            SatkerTypeSeeder::class, // Ubah dari SatkerSeeder
+        ]);
     }
 }

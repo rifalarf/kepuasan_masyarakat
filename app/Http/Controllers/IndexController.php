@@ -112,6 +112,18 @@ class IndexController extends Controller
             if ($step == 2) {
                 $data = $request->all();
 
+                // --- PERUBAHAN KRUSIAL ---
+                // Ambil kuesioner berdasarkan Satuan Kerja yang dipilih di step 1
+                $kuesioner = Kuesioner::where('village_id', $data['village'])->get();
+                $totalKuesioner = $kuesioner->count();
+
+                if ($totalKuesioner == 0) {
+                    return redirect()->route('index')->withErrors(['message' => 'Mohon maaf, kuesioner untuk Satuan Kerja yang Anda pilih belum tersedia.']);
+                }
+                // --- AKHIR PERUBAHAN ---
+
+                $question = (int) $request->question;
+
                 $validator = Validator::make($data, [
                     'step' => 'required',
                     'question' => 'required',

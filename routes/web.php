@@ -21,28 +21,39 @@ Route::post('/otp/verify', [OtpController::class, 'verify'])->name('otp.verify')
 
 Route::middleware('auth')->group(function () {
     Route::prefix('dasbor')->group(function () {
-       Route::get('/', [DasborController::class, 'index'])->name('dasbor');
-       Route::resource('/kuesioner', KuesionerController::class)->names('kuesioner');
-       Route::post('/kuesioner/checks', [KuesionerController::class, 'checks'])->name('kuesioner.checks');
-       Route::resource('/responden', RespondenController::class)->names('responden');
-       Route::get('/ikm', [DasborController::class, 'ikm'])->name('ikm.index');
-       Route::get('/ikm/export/graph', [DasborController::class, 'ikm_export'])->name('ikm.export.graph');
-       Route::get('/ikm/preview/graph', [DasborController::class, 'ikm_preview'])->name('ikm.preview.graph');
-       Route::get('/ikm/export/table', [DasborController::class, 'ikm_export_table'])->name('ikm.export.table');
-       Route::get('/ikm/preview/table', [DasborController::class, 'ikm_preview_table'])->name('ikm.preview.table');
-       Route::get('/feedback', [FeedbackController::class, 'index'])->name('feedback.index');
-       Route::get('/profil', [ProfilController::class, 'index'])->name('profil.index');
-       Route::post('/profil/update', [ProfilController::class, 'update'])->name('profil.update');
-       Route::post('/auth/password', [AuthController::class, 'change_password'])->name('auth.change_password');
-       Route::get('/laporan/responden/export/graph', [ExportController::class, 'responden_export'])->name('responden.export.graph');
-       Route::get('/laporan/responden/preview/graph', [ExportController::class, 'responden_preview'])->name('responden.preview.graph');
-       Route::get('/laporan/responden/export/table', [ExportController::class, 'responden_export_table'])->name('responden.export.table');
-       Route::get('/laporan/responden/preview/table', [ExportController::class, 'responden_preview_table'])->name('responden.preview.table');
-       Route::get('/laporan/feedback/export/table', [ExportController::class, 'feedback_export_table'])->name('feedback.export.table');
-       Route::get('/laporan/feedback/preview/table', [ExportController::class, 'feedback_preview_table'])->name('feedback.preview.table');
-       Route::get('/village', [DasborController::class, 'village'])->name('village.index');
-       Route::post('/village', [DasborController::class, 'village_add'])->name('village.add');
-       Route::patch('/village/{uuid}', [DasborController::class, 'village_update'])->name('village.update');
-       Route::delete('/village/{uuid}', [DasborController::class, 'village_destroy'])->name('village.destroy');
+        Route::get('/', [DasborController::class, 'index'])->name('dasbor');
+        Route::get('/profil', [ProfilController::class, 'index'])->name('profil.index');
+        Route::patch('/profil', [ProfilController::class, 'update'])->name('profil.update');
+        Route::post('/change-password', [AuthController::class, 'change_password'])->name('change-password');
+        Route::get('/responden', [RespondenController::class, 'index'])->name('responden.index');
+        Route::get('/responden/{responden:uuid}', [RespondenController::class, 'show'])->name('responden.show');
+        Route::get('/kuesioner', [KuesionerController::class, 'index'])->name('kuesioner.index');
+        Route::get('/kuesioner/create', [KuesionerController::class, 'create'])->name('kuesioner.create');
+        Route::post('/kuesioner', [KuesionerController::class, 'store'])->name('kuesioner.store');
+        Route::get('/kuesioner/{kuesioner:uuid}/edit', [KuesionerController::class, 'edit'])->name('kuesioner.edit');
+        Route::patch('/kuesioner/{kuesioner:uuid}', [KuesionerController::class, 'update'])->name('kuesioner.update');
+        Route::delete('/kuesioner/{kuesioner:uuid}', [KuesionerController::class, 'destroy'])->name('kuesioner.destroy');
+        Route::post('/kuesioner/checks', [KuesionerController::class, 'checks'])->name('kuesioner.checks');
+        Route::get('/ikm', [DasborController::class, 'ikm'])->name('ikm.index');
+        Route::get('/ikm/export', [DasborController::class, 'ikm_export'])->name('ikm.export');
+        Route::get('/ikm/preview', [DasborController::class, 'ikm_preview'])->name('ikm.preview');
+        Route::get('/ikm/export/table', [DasborController::class, 'ikm_export_table'])->name('ikm.export.table');
+        Route::get('/ikm/preview/table', [DasborController::class, 'ikm_preview_table'])->name('ikm.preview.table');
+        Route::get('/feedback', [FeedbackController::class, 'index'])->name('feedback.index');
+        Route::get('/laporan/responden/export', [ExportController::class, 'responden_export'])->name('responden.export');
+        Route::get('/laporan/responden/preview', [ExportController::class, 'responden_preview'])->name('responden.preview');
+        Route::get('/laporan/responden/export/table', [ExportController::class, 'responden_export_table'])->name('responden.export.table');
+        Route::get('/laporan/responden/preview/table', [ExportController::class, 'responden_preview_table'])->name('responden.preview.table');
+        Route::get('/laporan/feedback/export/table', [ExportController::class, 'feedback_export_table'])->name('feedback.export.table');
+        Route::get('/laporan/feedback/preview/table', [ExportController::class, 'feedback_preview_table'])->name('feedback.preview.table');
+
+        // Rute yang hanya bisa diakses oleh Admin Utama
+        Route::middleware('role:admin')->group(function () {
+            Route::get('/village', [DasborController::class, 'village'])->name('village.index');
+            Route::post('/village', [DasborController::class, 'village_add'])->name('village.add');
+            Route::patch('/village/{uuid}', [DasborController::class, 'village_update'])->name('village.update');
+            Route::delete('/village/{uuid}', [DasborController::class, 'village_destroy'])->name('village.destroy');
+            Route::resource('admin-satker', \App\Http\Controllers\AdminSatkerController::class);
+        });
     });
 });

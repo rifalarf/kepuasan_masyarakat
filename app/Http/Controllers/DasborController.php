@@ -6,10 +6,13 @@ use App\Models\Answer;
 use App\Models\Feedback;
 use App\Models\Kuesioner;
 use App\Models\Responden;
+use App\Models\SatkerType;
 use App\Models\Village;
+use App\Rules\NoRedundantTypeName;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Validator;
 
 function getIkmData($respondens, $kuesioners)
 {
@@ -95,18 +98,31 @@ function getIkmData($respondens, $kuesioners)
 
 class DasborController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $datakuesioners = Kuesioner::all();
-        $dataAnswers = Answer::all();
-        $dataRespondens = Responden::all();
-        $dataFeedbacks = Feedback::all();
+        // --- MULAI FILTER ---
+        $query = Responden::query();
+        if (auth()->user()->role === 'satker') {
+            $query->where('village_id', auth()->user()->village_id);
+        }
+        $dataRespondens = $query->get();
+        // --- AKHIR FILTER ---
+
+        // DEFINISIKAN $dataAnswers BERDASARKAN RESPONDEN YANG SUDAH DIFILTER
+        $dataAnswers = Answer::whereIn('responden_id', $dataRespondens->pluck('id'))->get();
+
+        // --- MULAI FILTER KUESIONER ---
+        $kuesionerQuery = Kuesioner::query();
+        if (auth()->user()->role === 'satker') {
+            $kuesionerQuery->where('village_id', auth()->user()->village_id);
+        }
+        // --- AKHIR FILTER KUESIONER ---
 
         $total = (object) [
-            'kuesioner' => $datakuesioners->count(),
-            'answer' => $dataAnswers->count(),
             'responden' => $dataRespondens->count(),
-            'feedback' => $dataFeedbacks->count()
+            'kuesioner' => $kuesionerQuery->count(), // Gunakan query yang sudah difilter
+            'jawaban' => $dataAnswers->count(),
+            'kritik' => Feedback::whereIn('responden_id', $dataRespondens->pluck('id'))->count(),
         ];
 
         $today = Carbon::now();
@@ -125,6 +141,9 @@ class DasborController extends Controller
                     'total' => Answer::where('answer', 1)
                         ->whereHas('responden', function ($query) use ($date) {
                             $query->whereDate('created_at', $date);
+                            if (auth()->user()->role === 'satker') {
+                                $query->where('village_id', auth()->user()->village_id);
+                            }
                         })
                         ->count()
                 ],
@@ -133,6 +152,9 @@ class DasborController extends Controller
                     'total' => Answer::where('answer', 2)
                         ->whereHas('responden', function ($query) use ($date) {
                             $query->whereDate('created_at', $date);
+                            if (auth()->user()->role === 'satker') {
+                                $query->where('village_id', auth()->user()->village_id);
+                            }
                         })
                         ->count()
                 ],
@@ -141,6 +163,9 @@ class DasborController extends Controller
                     'total' => Answer::where('answer', 3)
                         ->whereHas('responden', function ($query) use ($date) {
                             $query->whereDate('created_at', $date);
+                            if (auth()->user()->role === 'satker') {
+                                $query->where('village_id', auth()->user()->village_id);
+                            }
                         })
                         ->count()
                 ],
@@ -149,6 +174,9 @@ class DasborController extends Controller
                     'total' => Answer::where('answer', 4)
                         ->whereHas('responden', function ($query) use ($date) {
                             $query->whereDate('created_at', $date);
+                            if (auth()->user()->role === 'satker') {
+                                $query->where('village_id', auth()->user()->village_id);
+                            }
                         })
                         ->count()
                 ],
@@ -156,27 +184,27 @@ class DasborController extends Controller
         }
 
         $answers = (object) [
-            'total' => $total->answer,
+            'total' => $total->jawaban, // <-- PERBAIKI INI
             'details' => [
                 [
                     'label' => rateLabel(1),
                     'total' => $dataAnswers->where('answer', 1)->count(),
-                    'percentage' => getPercentage($dataAnswers->where('answer', 1)->count(), $total->answer)
+                    'percentage' => getPercentage($dataAnswers->where('answer', 1)->count(), $total->jawaban) // <-- PERBAIKI INI
                 ],
                 [
                     'label' => rateLabel(2),
                     'total' => $dataAnswers->where('answer', 2)->count(),
-                    'percentage' => getPercentage($dataAnswers->where('answer', 2)->count(), $total->answer)
+                    'percentage' => getPercentage($dataAnswers->where('answer', 2)->count(), $total->jawaban) // <-- PERBAIKI INI
                 ],
                 [
                     'label' => rateLabel(3),
                     'total' => $dataAnswers->where('answer', 3)->count(),
-                    'percentage' => getPercentage($dataAnswers->where('answer', 3)->count(), $total->answer)
+                    'percentage' => getPercentage($dataAnswers->where('answer', 3)->count(), $total->jawaban) // <-- PERBAIKI INI
                 ],
                 [
                     'label' => rateLabel(4),
                     'total' => $dataAnswers->where('answer', 4)->count(),
-                    'percentage' => getPercentage($dataAnswers->where('answer', 4)->count(), $total->answer)
+                    'percentage' => getPercentage($dataAnswers->where('answer', 4)->count(), $total->jawaban) // <-- PERBAIKI INI
                 ],
             ],
             'daily' => $dailyAnswers
@@ -263,7 +291,7 @@ class DasborController extends Controller
         $labels = [];
         foreach ($villages as $key => $village) {
             $series[$key] = (int) number_format(getPercentage($dataRespondens->where('village_id', $village->id)->count(), $dataRespondens->count()), 2);
-            $labels[$key] = $village->village;
+            $labels[$key] = $village->name;
         }
         $dataGrafikDesa = (object) [
             'series' => $series,
@@ -287,31 +315,29 @@ class DasborController extends Controller
 
     public function ikm(Request $request)
     {
+        // --- MULAI FILTER ---
         $query = Responden::query();
-
-        if (!$request->has('start_date') || !$request->has('end_date')) {
-            $oldestResponden = Responden::oldest('created_at')->first();
-            $newestResponden = Responden::latest('created_at')->first();
-
-            $dates = [
-                'start_date' => $oldestResponden ? $oldestResponden->created_at->format('Y-m-d') : Carbon::now()->subYear()->format('Y-m-d'),
-                'end_date' => $newestResponden ? $newestResponden->created_at->format('Y-m-d') : Carbon::now()->format('Y-m-d')
-            ];
-
-            return redirect()->route('ikm.index', array_merge($request->all(), $dates));
+        if (auth()->user()->role === 'satker') {
+            $query->where('village_id', auth()->user()->village_id);
         }
+        // --- AKHIR FILTER ---
 
-        if ($request->has('filter') && $request->has('filter_by') && $request->filter != 'Semua') {
-            $query->where($request->filter_by, $request->filter);
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $startDate = Carbon::parse($request->start_date)->subDay()->startOfDay()->toDateTimeString();
+            $endDate = Carbon::parse($request->end_date)->addDay()->endOfDay()->toDateTimeString();
+            $query->whereBetween('created_at', [$startDate, $endDate]);
         }
-
-        $startDate = Carbon::parse($request->start_date)->subDay()->startOfDay()->toDateTimeString();
-        $endDate = Carbon::parse($request->end_date)->addDay()->endOfDay()->toDateTimeString();
-
-        $query->whereBetween('created_at', [$startDate, $endDate]);
 
         $respondens = $query->get();
-        $kuesioners = Kuesioner::all();
+
+        // --- MULAI FILTER KUESIONER ---
+        $kuesionerQuery = Kuesioner::query();
+        if (auth()->user()->role === 'satker') {
+            $kuesionerQuery->where('village_id', auth()->user()->village_id);
+        }
+        $kuesioners = $kuesionerQuery->get();
+        // --- AKHIR FILTER KUESIONER ---
+
         $villages = Village::all();
 
         extract(getIKM($respondens, $kuesioners));
@@ -518,17 +544,39 @@ class DasborController extends Controller
         return $pdf->stream();
     }
 
-    public function village()
+    public function village(Request $request)
     {
-        $data = Village::latest()->paginate(5);
+        $query = Village::with('satkerType');
 
-        return view('pages.dashboard.village.index', compact('data'));
+        // Proses pencarian
+        if ($request->has('search') && $request->search) {
+            $query->where('name', 'like', '%' . $request->search . '%');
+        }
+
+        // Proses filter
+        if ($request->has('type') && $request->type) {
+            $query->where('satker_type_id', $request->type);
+        }
+
+        $data = $query->latest()->paginate(10);
+        $types = SatkerType::orderBy('name')->get();
+
+        return view('pages.dashboard.village.index', compact('data', 'types'));
     }
 
     public function village_add(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'satker_type_id' => 'required|exists:satker_types,id',
+            'name' => ['required', 'string', 'max:100', new NoRedundantTypeName],
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
         try {
-            Village::create($request->only('village'));
+            Village::create($validator->validated());
             return redirect()
                 ->route('village.index')
                 ->with('success', 'Data berhasil disimpan!');
@@ -540,18 +588,24 @@ class DasborController extends Controller
 
     public function village_update(Request $request, $uuid)
     {
+        $validator = Validator::make($request->all(), [
+            'satker_type_id' => 'required|exists:satker_types,id',
+            'name' => ['required', 'string', 'max:100', new NoRedundantTypeName],
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
         try {
-            $village = Village::where('uuid', $uuid)->first();
-            if (!$village) {
-                return redirect()->back()->withErrors(['message' => 'Data tidak ditemukan!']);
-            }
-            $village->update([
-                'village' => $request->village
-            ]);
-            return redirect()->route('village.index')->with('success', 'Data berhasil diedit!');
+            $village = Village::where('uuid', $uuid)->firstOrFail();
+            $village->update($validator->validated());
+            return redirect()
+                ->route('village.index')
+                ->with('success', 'Data berhasil diedit!');
         } catch (\Throwable $th) {
             return redirect()->back()
-                ->withErrors(['message' => 'Terjadi kesalahan saat mengedit data! ' . $th->getMessage()]);
+                ->withErrors(['message' => ['Terjadi kesalahan saat mengedit data!', $th->getMessage()]]);
         }
     }
 

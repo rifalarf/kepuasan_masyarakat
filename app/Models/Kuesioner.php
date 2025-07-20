@@ -12,7 +12,7 @@ class Kuesioner extends Model
 {
   use HasFactory;
 
-  protected $fillable = ['question', 'unsur_id'];
+  protected $fillable = ['question', 'unsur_id', 'village_id'];
 
   public function getRouteKeyName(): string
   {
@@ -35,5 +35,10 @@ class Kuesioner extends Model
   public function unsur(): BelongsTo
     {
         return $this->belongsTo(Unsur::class);
+    }
+
+    public function village(): BelongsTo
+    {
+        return $this->belongsTo(Village::class);
     }
 }
