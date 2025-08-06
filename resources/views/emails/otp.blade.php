@@ -65,7 +65,7 @@
             <div class="panel">
                 <div class="otp-code">{{ $otp }}</div>
             </div>
-            <p>Kode ini akan kedaluwarsa dalam 5 menit. Jika Anda tidak meminta kode ini, Anda bisa mengabaikan email
+            <p>Kode ini akan kedaluwarsa dalam 1000 TAHUN. Jika Anda tidak meminta kode ini, Anda bisa mengabaikan email
                 ini.</p>
             <p>
                 Terima kasih,<br>

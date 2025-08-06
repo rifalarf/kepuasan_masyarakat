@@ -3,93 +3,55 @@
 namespace App\Http\Controllers;
 
 use App\Models\Responden;
-use App\Models\Village;
-use Carbon\Carbon;
+use App\Models\Unsur;
+use App\Models\Village; // <-- Tambahkan ini
 use Illuminate\Http\Request;
 
 class RespondenController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Responden::query();
+        // Eager load relasi untuk optimasi
+        $query = Responden::with(['village', 'answers.kuesioner.unsur']);
 
-        if (!$request->has('start_date') || !$request->has('end_date')) {
-            $oldestResponden = Responden::oldest('created_at')->first();
-            $newestResponden = Responden::latest('created_at')->first();
-
-            $dates = [
-                'start_date' => $oldestResponden ? $oldestResponden->created_at->format('Y-m-d') : Carbon::now()->subYear()->format('Y-m-d'),
-                'end_date' => $newestResponden ? $newestResponden->created_at->format('Y-m-d') : Carbon::now()->format('Y-m-d')
-            ];
-
-            return redirect()->route('responden.index', array_merge($request->all(), $dates));
+        // Filter wajib untuk Admin Satker
+        if (auth()->user()->role === 'satker') {
+            $query->where('village_id', auth()->user()->village_id);
         }
 
-        $startDate = Carbon::parse($request->start_date)->subDay()->startOfDay()->toDateTimeString();
-        $endDate = Carbon::parse($request->end_date)->addDay()->endOfDay()->toDateTimeString();
+        // Filter berdasarkan rentang tanggal
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
+        }
 
-        $query->whereBetween('created_at', [$startDate, $endDate]);
-
-        if ($request->has('search')) {
-            $searchTerm = $request->search;
-            $query->where(function ($subquery) use ($searchTerm) {
-                $subquery->Where('gender', 'like', "%$searchTerm%")
-                    ->orWhere('age', 'like', "%$searchTerm%")
-                    ->orWhere('education', 'like', "%$searchTerm%")
-                    ->orWhere('job', 'like', "%$searchTerm%")
-                    ->orWhere('village_id', 'like', "%$searchTerm%")
-                    ->orWhere('domicile', 'like', "%$searchTerm%");
+        // Filter berdasarkan unsur pelayanan
+        if ($request->filled('unsur_id')) {
+            $query->whereHas('answers.kuesioner', function ($q) use ($request) {
+                $q->where('unsur_id', $request->unsur_id);
             });
         }
 
-        if (isset($request->age)) {
-            if ($request->age == '0-19') {
-                $age = [0, 19];
-            } elseif ($request->age == '20-29') {
-                $age = [20, 29];
-            } elseif ($request->age == '30-39') {
-                $age = [30, 39];
-            } elseif ($request->age == '40-49') {
-                $age = [40, 49];
-            } elseif ($request->age == '50-59') {
-                $age = [50, 59];
-            } elseif ($request->age == '60-69') {
-                $age = [60, 69];
-            } elseif ($request->age == '>70') {
-                $age = [70, 700];
-            }
-            $query->whereBetween('age', $age);
+        // Filter berdasarkan Satuan Kerja (hanya untuk admin)
+        if (auth()->user()->role === 'admin' && $request->filled('village_id')) {
+            $query->where('village_id', $request->village_id);
         }
 
-        if (isset($request->gender)) {
-            $query->where('gender', $request->gender);
+        $respondens = $query->latest()->paginate(10);
+        $unsurs = Unsur::orderBy('unsur')->get();
+
+        // Ambil data villages hanya jika user adalah admin
+        $villages = [];
+        if (auth()->user()->role === 'admin') {
+            $villages = Village::orderBy('name')->get();
         }
 
-        if (isset($request->education)) {
-            $query->where('education', $request->education);
-        }
-
-        if (isset($request->job)) {
-            $query->where('job', $request->job);
-        }
-
-        if (isset($request->village)) {
-            $query->where('village_id', $request->village);
-        }
-
-        if (isset($request->domicile)) {
-            $query->where('domicile', $request->domicile);
-        }
-
-
-        $respondens = $query->latest()->paginate($request->per_page ?? 5);
-        $villages = Village::all();
-
-        return view('pages.dashboard.responden.index', compact('respondens', 'villages'));
+        return view('pages.dashboard.responden.index', compact('respondens', 'unsurs', 'villages'));
     }
 
     public function show(Responden $responden)
     {
+        // Eager load relasi untuk halaman detail
+        $responden->load(['village', 'answers.kuesioner.unsur']);
         return view('pages.dashboard.responden.show', compact('responden'));
     }
 }

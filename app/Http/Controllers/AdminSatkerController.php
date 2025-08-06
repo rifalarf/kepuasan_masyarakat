@@ -7,6 +7,7 @@ use App\Models\Village;
 use App\Models\SatkerType; // Pastikan ini ada
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules;
 
 class AdminSatkerController extends Controller
@@ -81,7 +82,8 @@ class AdminSatkerController extends Controller
     {
         // Lakukan hal yang sama untuk method edit
         $satkerTypes = SatkerType::with('villages')->whereHas('villages')->orderBy('name')->get();
-        return view('pages.dashboard.admin-satker.edit', compact('admin_satker', 'satkerTypes'));
+        $villages = Village::orderBy('name')->get();
+        return view('pages.dashboard.admin-satker.edit', compact('admin_satker', 'satkerTypes', 'villages'));
     }
 
     /**
@@ -91,24 +93,26 @@ class AdminSatkerController extends Controller
     {
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', \Illuminate\Validation\Rule::unique('users')->ignore($admin_satker->id)],
-            'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($admin_satker->id)],
+            'password' => ['nullable', Rules\Password::defaults()],
             'village_id' => ['required', 'exists:villages,id'],
         ]);
 
-        $dataToUpdate = [
-            'name' => $request->name,
-            'email' => $request->email,
-            'village_id' => $request->village_id,
-        ];
+        // Update properti secara langsung untuk menghindari masalah mass assignment
+        $admin_satker->name = $request->name;
+        $admin_satker->email = $request->email;
+        $admin_satker->village_id = $request->village_id;
 
+        // Jika password diisi, hash dan perbarui
         if ($request->filled('password')) {
-            $dataToUpdate['password'] = Hash::make($request->password);
+            $admin_satker->password = Hash::make($request->password);
         }
 
-        $admin_satker->update($dataToUpdate);
+        $admin_satker->save(); // Simpan perubahan ke database
 
-        return redirect()->route('admin-satker.index')->with('success', 'Admin Satker berhasil diperbarui.');
+        return redirect()
+            ->route('admin-satker.index')
+            ->with('success', 'Data Admin Satker berhasil diperbarui.');
     }
 
     /**

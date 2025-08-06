@@ -190,7 +190,7 @@ class ExportController extends Controller
   public function responden_export(Request $request)
   {
     $respondens = Responden::all();
-    if (count($respondens) == 0) {
+    if ($respondens->isEmpty()) {
       return redirect()->back()
         ->withErrors(['message' => ['Data Kosong']]);
     }
@@ -205,7 +205,7 @@ class ExportController extends Controller
   public function responden_preview(Request $request)
   {
     $respondens = Responden::all();
-    if (count($respondens) == 0) {
+    if ($respondens->isEmpty()) {
       return redirect()->back()
         ->withErrors(['message' => ['Data Kosong']]);
     }
@@ -291,7 +291,7 @@ class ExportController extends Controller
 
     $respondens = $query->latest()->paginate($request->per_page ?? 5);
 
-    if (count($respondens) == 0) {
+    if ($respondens->isEmpty()) {
       return redirect()->back()
         ->withErrors(['message' => ['Data Kosong']]);
     }
@@ -374,7 +374,7 @@ class ExportController extends Controller
     }
     $respondens = $query->latest()->paginate($request->per_page ?? 5);
 
-    if (count($respondens) == 0) {
+    if ($respondens->isEmpty()) {
       return redirect()->back()
         ->withErrors(['message' => ['Data Kosong']]);
     }
@@ -383,29 +383,113 @@ class ExportController extends Controller
     return $Pdf->stream();
   }
 
-  public function feedback_preview_table()
+  public function feedback_preview_table(Request $request)
   {
-    $data = Feedback::all();
+    // Menggunakan logika query dan filter yang sama dengan fungsi export
+    $query = Feedback::with(['responden.village', 'responden.answers.kuesioner.unsur']);
 
-    if (count($data) == 0) {
-      return redirect()->back()
-        ->withErrors(['message' => ['Data Kosong']]);
+    if (auth()->user()->role === 'satker') {
+        $query->whereHas('responden', function ($q) {
+            $q->where('village_id', auth()->user()->village_id);
+        });
+    }
+    if (auth()->user()->role === 'admin' && $request->filled('village_id')) {
+        $query->whereHas('responden', function ($q) use ($request) {
+            $q->where('village_id', $request->village_id);
+        });
+    }
+    if ($request->filled('unsur_id')) {
+        $query->whereHas('responden.answers.kuesioner', function ($q) use ($request) {
+            $q->where('unsur_id', $request->unsur_id);
+        });
     }
 
-    $Pdf = Pdf::loadView('export.feedback-table', compact('data'));
-    return $Pdf->stream();
+    $data = $query->latest()->get();
+
+    if ($data->isEmpty()) {
+      return redirect()->back()
+        ->withErrors(['message' => ['Data Kritik & Saran kosong untuk dipreview.']]);
+    }
+
+    // Menambahkan logika analisis kata kunci yang hilang
+    $keywordsCount = [];
+    $ignoredWords = [
+        'saya', 'aku', 'kamu', 'dia', 'mereka', 'ini', 'itu', 'sini', 'situ', 'adalah', 'sebagai', 'oleh', 'pada', 'di',
+        'dan', 'atau', 'tetapi', 'namun', 'sebab', 'karena', 'yang', 'apa', 'bagaimana', 'dimana', 'kapan', 'siapa',
+        'dengan', 'ke', 'dari', 'menuju', 'kepada', 'menuju', 'sangat', 'tidak', 'bisa', 'agar', 'untuk', 'supaya',
+        'lebih', 'kurang', 'baik', 'jelek', 'tolong', 'mohon', 'harap', 'sudah', 'belum', 'selalu', 'sering', 'perlu',
+    ];
+
+    foreach ($data as $feedback) {
+        $feedbackText = strtolower($feedback->feedback);
+        $words = array_diff(str_word_count($feedbackText, 1), $ignoredWords);
+        foreach ($words as $word) {
+            if (strlen($word) > 3) {
+                $keywordsCount[$word] = ($keywordsCount[$word] ?? 0) + 1;
+            }
+        }
+    }
+    arsort($keywordsCount);
+    $topKeywords = array_slice($keywordsCount, 0, 10);
+
+    // Mengirim variabel $topKeywords ke view
+    $Pdf = Pdf::loadView('export.feedback-table', compact('data', 'topKeywords'));
+    return $Pdf->stream('Laporan Analisis Kritik dan Saran.pdf');
   }
 
-  public function feedback_export_table()
+  public function feedback_export_table(Request $request)
   {
-    $data = Feedback::all();
+    $query = Feedback::with(['responden.village', 'responden.answers.kuesioner.unsur']);
 
-    if (count($data) == 0) {
-      return redirect()->back()
-        ->withErrors(['message' => ['Data Kosong']]);
+    // Terapkan filter yang sama dari halaman index
+    if (auth()->user()->role === 'satker') {
+        $query->whereHas('responden', function ($q) {
+            $q->where('village_id', auth()->user()->village_id);
+        });
     }
 
-    $Pdf = Pdf::loadView('export.feedback-table', compact('data'));
-    return $Pdf->download('Laporan Kritik dan Saran.pdf');
+    if (auth()->user()->role === 'admin' && $request->filled('village_id')) {
+        $query->whereHas('responden', function ($q) use ($request) {
+            $q->where('village_id', $request->village_id);
+        });
+    }
+
+    if ($request->filled('unsur_id')) {
+        $query->whereHas('responden.answers.kuesioner', function ($q) use ($request) {
+            $q->where('unsur_id', $request->unsur_id);
+        });
+    }
+
+    $data = $query->latest()->get();
+
+    if ($data->isEmpty()) {
+      return redirect()->back()
+        ->withErrors(['message' => ['Data Kritik & Saran kosong untuk diekspor.']]);
+    }
+
+    // --- ANALISIS KATA KUNCI ---
+    $keywordsCount = [];
+    $ignoredWords = [
+        'saya', 'aku', 'kamu', 'dia', 'mereka', 'ini', 'itu', 'sini', 'situ', 'adalah', 'sebagai', 'oleh', 'pada', 'di',
+        'dan', 'atau', 'tetapi', 'namun', 'sebab', 'karena', 'yang', 'apa', 'bagaimana', 'dimana', 'kapan', 'siapa',
+        'dengan', 'ke', 'dari', 'menuju', 'kepada', 'menuju', 'sangat', 'tidak', 'bisa', 'agar', 'untuk', 'supaya',
+        'lebih', 'kurang', 'baik', 'jelek', 'tolong', 'mohon', 'harap', 'sudah', 'belum', 'selalu', 'sering', 'perlu',
+    ];
+
+    foreach ($data as $feedback) {
+        $feedbackText = strtolower($feedback->feedback);
+        $words = array_diff(str_word_count($feedbackText, 1), $ignoredWords);
+        foreach ($words as $word) {
+            if (strlen($word) > 3) { // Hanya hitung kata dengan panjang > 3
+                $keywordsCount[$word] = ($keywordsCount[$word] ?? 0) + 1;
+            }
+        }
+    }
+    arsort($keywordsCount);
+    $topKeywords = array_slice($keywordsCount, 0, 10); // Ambil 10 kata kunci teratas
+    // --- AKHIR ANALISIS ---
+
+    $Pdf = Pdf::loadView('export.feedback-table', compact('data', 'topKeywords'));
+    return $Pdf->download('Laporan Analisis Kritik dan Saran.pdf');
   }
 }

@@ -4,12 +4,12 @@
     <label for="{{ $id }}"
         class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">{{ $label }}</label>
     <div class="relative">
-        <input type="password" name="{{ $name }}" id="{{ $id }}" placeholder="{{ $placeholder }}"
-            value="{{ $value }}"
+        <input type="{{ $type ?? 'password' }}" name="{{ $name }}" id="{{ $id }}"
+            autocomplete="new-password"
             class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 pr-10 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-500 dark:bg-gray-600 dark:text-white dark:placeholder-gray-400"
-            {{ $required ? 'required' : '' }}>
+            placeholder="{{ $placeholder ?? '••••••••' }}" {{ $attributes }}>
         <button type="button" data-toggle-password="{{ $id }}"
-            class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+            class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700">
             {{-- Ikon mata terbuka --}}
             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                 xmlns="http://www.w3.org/2000/svg" data-eye-open>

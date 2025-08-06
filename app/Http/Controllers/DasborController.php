@@ -315,32 +315,56 @@ class DasborController extends Controller
 
     public function ikm(Request $request)
     {
-        // --- MULAI FILTER ---
+        // --- MULAI FILTER RESPONDEN ---
         $query = Responden::query();
+
+        // Filter wajib untuk Admin Satker
         if (auth()->user()->role === 'satker') {
             $query->where('village_id', auth()->user()->village_id);
         }
-        // --- AKHIR FILTER ---
 
-        if ($request->has('start_date') && $request->has('end_date')) {
-            $startDate = Carbon::parse($request->start_date)->subDay()->startOfDay()->toDateTimeString();
-            $endDate = Carbon::parse($request->end_date)->addDay()->endOfDay()->toDateTimeString();
-            $query->whereBetween('created_at', [$startDate, $endDate]);
+        // Filter berdasarkan rentang tanggal
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
         }
 
-        $respondens = $query->get();
-
-        // --- MULAI FILTER KUESIONER ---
-        $kuesionerQuery = Kuesioner::query();
-        if (auth()->user()->role === 'satker') {
-            $kuesionerQuery->where('village_id', auth()->user()->village_id);
+        // Filter berdasarkan satuan kerja (village) untuk Admin Utama
+        if (auth()->user()->role === 'admin' && $request->filled('village_id')) {
+            $query->where('village_id', $request->village_id);
         }
-        $kuesioners = $kuesionerQuery->get();
-        // --- AKHIR FILTER KUESIONER ---
+        // --- AKHIR FILTER RESPONDEN ---
 
-        $villages = Village::all();
+        $respondens = $query->with('answers')->get();
 
-        extract(getIKM($respondens, $kuesioners));
+        if ($respondens->isEmpty()) {
+            // Jika tidak ada responden sama sekali, langsung tampilkan halaman dengan data kosong.
+            $data = [];
+            $IKM = 0;
+            $konversiIKM = 0;
+            $bobotNilaiTertimbang = 0;
+            $villages = Village::orderBy('name')->get();
+            return view('pages.dashboard.ikm.index', compact('data', 'IKM', 'konversiIKM', 'bobotNilaiTertimbang', 'villages'));
+        }
+
+        // --- LOGIKA PENGAMBILAN KUESIONER YANG DIPERBAIKI ---
+        // 1. Kumpulkan semua ID kuesioner yang unik dari jawaban responden yang telah difilter.
+        $answeredKuesionerIds = $respondens->pluck('answers')->flatten()->pluck('kuesioner_id')->unique();
+
+        // 2. Ambil hanya objek Kuesioner yang benar-benar dijawab.
+        $kuesioners = Kuesioner::whereIn('id', $answeredKuesionerIds)->get();
+        // --- AKHIR PERBAIKAN ---
+
+
+        // Ambil semua satuan kerja untuk dropdown filter
+        $villages = Village::orderBy('name')->get();
+
+        // Panggil helper dengan data yang sudah pasti relevan
+        $ikmData = getIKM($respondens, $kuesioners);
+
+        $data = $ikmData['data'] ?? [];
+        $IKM = $ikmData['IKM'] ?? 0;
+        $konversiIKM = $ikmData['konversiIKM'] ?? 0;
+        $bobotNilaiTertimbang = $ikmData['bobotNilaiTertimbang'] ?? 0;
 
         return view('pages.dashboard.ikm.index', compact('data', 'IKM', 'konversiIKM', 'bobotNilaiTertimbang', 'villages'));
     }
@@ -465,81 +489,110 @@ class DasborController extends Controller
 
     public function ikm_export_table(Request $request)
     {
+        // --- MULAI FILTER (LOGIKA DISAMAKAN DENGAN METHOD IKM) ---
         $query = Responden::query();
+        $villageName = 'Semua Satuan Kerja'; // Default
 
-        if (!$request->has('start_date') || !$request->has('end_date')) {
-            $oldestResponden = Responden::oldest('created_at')->first();
-            $newestResponden = Responden::latest('created_at')->first();
-
-            $dates = [
-                'start_date' => $oldestResponden ? $oldestResponden->created_at->format('Y-m-d') : Carbon::now()->subYear()->format('Y-m-d'),
-                'end_date' => $newestResponden ? $newestResponden->created_at->format('Y-m-d') : Carbon::now()->format('Y-m-d')
-            ];
-
-            return redirect()->route('ikm.index', array_merge($request->all(), $dates));
+        // Filter wajib untuk Admin Satker
+        if (auth()->user()->role === 'satker') {
+            $query->where('village_id', auth()->user()->village_id);
+            $villageName = auth()->user()->village->name;
         }
 
-        if ($request->has('filter') && $request->has('filter_by') && $request->filter != 'Semua') {
-            $query->where($request->filter_by, $request->filter);
+        // Filter berdasarkan rentang tanggal
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
         }
 
-        $startDate = Carbon::parse($request->start_date)->subDay()->startOfDay()->toDateTimeString();
-        $endDate = Carbon::parse($request->end_date)->addDay()->endOfDay()->toDateTimeString();
+        // Filter berdasarkan satuan kerja (village) untuk Admin Utama
+        if (auth()->user()->role === 'admin' && $request->filled('village_id')) {
+            $query->where('village_id', $request->village_id);
+            $village = Village::find($request->village_id);
+            if ($village) {
+                $villageName = $village->name;
+            }
+        }
+        // --- AKHIR FILTER ---
 
-        $query->whereBetween('created_at', [$startDate, $endDate]);
+        $respondens = $query->with('answers')->get();
 
-        $respondens = $query->get();
-        $kuesioners = Kuesioner::all();
-        $villages = Village::all();
-
-        extract(getIKM($respondens, $kuesioners));
-
-        if (count($data) == 0) {
+        if ($respondens->isEmpty()) {
             return redirect()->back()
-                ->withErrors(['message' => ['Data Kosong']]);
+                ->withErrors(['message' => ['Data responden kosong untuk periode atau filter yang dipilih.']]);
         }
 
-        $pdf = Pdf::loadView('export.ikm-table', compact('data', 'IKM', 'konversiIKM', 'bobotNilaiTertimbang'));
+        // --- LOGIKA PENGAMBILAN KUESIONER YANG DIPERBAIKI ---
+        $answeredKuesionerIds = $respondens->pluck('answers')->flatten()->pluck('kuesioner_id')->unique();
+        $kuesioners = Kuesioner::whereIn('id', $answeredKuesionerIds)->get();
+        // --- AKHIR PERBAIKAN ---
 
-        return $pdf->download('Laporan IKM.pdf');
+        $ikmData = getIKM($respondens, $kuesioners);
+        $data = $ikmData['data'] ?? [];
+        $IKM = $ikmData['IKM'] ?? 0;
+        $konversiIKM = $ikmData['konversiIKM'] ?? 0;
+        $bobotNilaiTertimbang = $ikmData['bobotNilaiTertimbang'] ?? 0;
+
+        if (empty($data)) {
+            return redirect()->back()
+                ->withErrors(['message' => ['Data IKM tidak dapat dihitung. Pastikan ada kuesioner yang sesuai untuk responden yang difilter.']]);
+        }
+
+        $pdf = Pdf::loadView('export.ikm-table', compact('data', 'IKM', 'konversiIKM', 'bobotNilaiTertimbang', 'villageName'));
+
+        return $pdf->download('Laporan IKM - ' . $villageName . '.pdf');
     }
 
     public function ikm_preview_table(Request $request)
     {
+        // --- MULAI FILTER (LOGIKA DISAMAKAN DENGAN METHOD IKM) ---
         $query = Responden::query();
+        $villageName = 'Semua Satuan Kerja'; // Default
 
-        if (!$request->has('start_date') || !$request->has('end_date')) {
-            $oldestResponden = Responden::oldest('created_at')->first();
-            $newestResponden = Responden::latest('created_at')->first();
-
-            $dates = [
-                'start_date' => $oldestResponden ? $oldestResponden->created_at->format('Y-m-d') : Carbon::now()->subYear()->format('Y-m-d'),
-                'end_date' => $newestResponden ? $newestResponden->created_at->format('Y-m-d') : Carbon::now()->format('Y-m-d')
-            ];
-
-            return redirect()->route('ikm.index', array_merge($request->all(), $dates));
+        // Filter wajib untuk Admin Satker
+        if (auth()->user()->role === 'satker') {
+            $query->where('village_id', auth()->user()->village_id);
+            $villageName = auth()->user()->village->name;
         }
 
-        if ($request->has('filter') && $request->has('filter_by') && $request->filter != 'Semua') {
-            $query->where($request->filter_by, $request->filter);
+        // Filter berdasarkan rentang tanggal
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('created_at', [$request->start_date, $request->end_date]);
         }
 
-        $startDate = Carbon::parse($request->start_date)->subDay()->startOfDay()->toDateTimeString();
-        $endDate = Carbon::parse($request->end_date)->addDay()->endOfDay()->toDateTimeString();
+        // Filter berdasarkan satuan kerja (village) untuk Admin Utama
+        if (auth()->user()->role === 'admin' && $request->filled('village_id')) {
+            $query->where('village_id', $request->village_id);
+            $village = Village::find($request->village_id);
+            if ($village) {
+                $villageName = $village->name;
+            }
+        }
+        // --- AKHIR FILTER ---
 
-        $query->whereBetween('created_at', [$startDate, $endDate]);
+        $respondens = $query->with('answers')->get();
 
-        $respondens = $query->get();
-        $kuesioners = Kuesioner::all();
-
-        extract(getIKM($respondens, $kuesioners));
-
-        if (count($data) == 0) {
+        if ($respondens->isEmpty()) {
             return redirect()->back()
-                ->withErrors(['message' => ['Data Kosong']]);
+                ->withErrors(['message' => ['Data responden kosong untuk periode atau filter yang dipilih.']]);
         }
 
-        $pdf = Pdf::loadView('export.ikm-table', compact('data', 'IKM', 'konversiIKM', 'bobotNilaiTertimbang'));
+        // --- LOGIKA PENGAMBILAN KUESIONER YANG DIPERBAIKI ---
+        $answeredKuesionerIds = $respondens->pluck('answers')->flatten()->pluck('kuesioner_id')->unique();
+        $kuesioners = Kuesioner::whereIn('id', $answeredKuesionerIds)->get();
+        // --- AKHIR PERBAIKAN ---
+
+        $ikmData = getIKM($respondens, $kuesioners);
+        $data = $ikmData['data'] ?? [];
+        $IKM = $ikmData['IKM'] ?? 0;
+        $konversiIKM = $ikmData['konversiIKM'] ?? 0;
+        $bobotNilaiTertimbang = $ikmData['bobotNilaiTertimbang'] ?? 0;
+
+        if (empty($data)) {
+            return redirect()->back()
+                ->withErrors(['message' => ['Data IKM tidak dapat dihitung. Pastikan ada kuesioner yang sesuai untuk responden yang difilter.']]);
+        }
+
+        $pdf = Pdf::loadView('export.ikm-table', compact('data', 'IKM', 'konversiIKM', 'bobotNilaiTertimbang', 'villageName'));
 
         return $pdf->stream();
     }
@@ -612,15 +665,21 @@ class DasborController extends Controller
     public function village_destroy($uuid)
     {
         try {
-            $village = Village::where('uuid', $uuid)->first();
-            if (!$village) {
-                return redirect()->back()->withErrors(['message' => 'Data tidak ditemukan!']);
-            }
+            $village = Village::where('uuid', $uuid)->firstOrFail();
+
+            // Otorisasi tambahan jika diperlukan
             // if ($village->allowDelete == 0) {
             //     return redirect()->back()->withErrors(['message' => 'Data ini tidak bisa dihapus!']);
             // }
-            Village::destroy($village->id);
-            return redirect()->route('village.index')->with('success', 'Data berhasil dihapus!');
+
+            // Hapus semua data yang bergantung pada Satuan Kerja ini
+            $village->kuesioners()->delete(); // Hapus kuesioner terkait
+            $village->users()->delete();      // Hapus admin satker terkait
+            $village->respondens()->delete(); // Hapus responden terkait (opsional, tergantung kebijakan)
+
+            $village->delete(); // Hapus Satuan Kerja itu sendiri
+
+            return redirect()->route('village.index')->with('success', 'Data Satuan Kerja dan semua data terkait berhasil dihapus!');
         } catch (\Throwable $th) {
             return redirect()->back()
                 ->withErrors(['message' => 'Terjadi kesalahan saat menghapus data! ' . $th->getMessage()]);

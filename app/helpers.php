@@ -68,69 +68,69 @@ if (!function_exists('getPercentage')) {
 if (!function_exists('getIKM')) {
   function getIKM($respondens, $kuesioners)
   {
-    $data = [];
-
-    $bobotNilaiTertimbang = 1;
-    if (count($kuesioners) > 0) {
-      $bobotNilaiTertimbang = 1 / count($kuesioners);
-    }
-
-    $nilaiPersepsiPerUnit = [];
-    foreach ($respondens as $keyResponden => $responden) {
-      foreach ($responden->answers as $keyAnswer => $answer) {
-        $nilaiPersepsiPerUnit[$keyResponden][$keyAnswer] = (object) [
-          'question' => $answer->kuesioner->question,
-          'answer' => $answer->answer
+    if ($respondens->isEmpty() || $kuesioners->isEmpty()) {
+        return [
+            'data' => [],
+            'IKM' => 0,
+            'konversiIKM' => 0,
+            'bobotNilaiTertimbang' => 0,
         ];
-      }
     }
 
-    $totalAnswer = [];
-    foreach ($nilaiPersepsiPerUnit as $key => $array) {
-      for ($i = 0; $i < count($array); $i++) {
-        if (!isset($totalAnswer[$i])) {
-          $totalAnswer[$i] = 0;
-        }
-        $totalAnswer[$i] += $array[$i]->answer;
-      }
+    // Eager load relasi untuk efisiensi
+    $respondens->load('answers');
+    $kuesioners->load('unsur');
+
+    // Kelompokkan jawaban berdasarkan kuesioner_id untuk pencarian cepat
+    $allAnswers = $respondens->pluck('answers')->flatten();
+    $answersByKuesioner = $allAnswers->groupBy('kuesioner_id');
+
+    $totalResponden = $respondens->count();
+    $totalKuesioner = $kuesioners->count();
+    $bobotNilaiTertimbang = round(1 / $totalKuesioner, 2);
+
+    $data = [];
+    foreach ($kuesioners as $kuesioner) {
+        $answersForThisKuesioner = $answersByKuesioner->get($kuesioner->id, collect());
+        $totalNilaiPerUnsur = $answersForThisKuesioner->sum('answer');
+        
+        $rataRataPerUnsur = $totalResponden > 0 ? $totalNilaiPerUnsur / $totalResponden : 0;
+        $rataRataTertimbang = $rataRataPerUnsur * $bobotNilaiTertimbang;
+
+        $data[] = (object) [
+            'question' => $kuesioner->question,
+            'unsur' => $kuesioner->unsur->unsur ?? 'N/A',
+            'totalNilaiPersepsiPerUnit' => $totalNilaiPerUnsur,
+            'NRRPerUnsur' => $rataRataPerUnsur,
+            'NRRTertimbangUnsur' => $rataRataTertimbang,
+        ];
     }
 
-    foreach ($totalAnswer as $key => $value) {
-      $data[$key] = (object) [
-        'question' => $kuesioners[$key]->question,
-        'totalNilaiPersepsiPerUnit' => $value
-      ];
-    }
-
-    foreach ($data as $key => $value) {
-      $data[$key] = (object) [
-        'question' => $value->question,
-        'totalNilaiPersepsiPerUnit' => $value->totalNilaiPersepsiPerUnit,
-        'NRRPerUnsur' => $value->totalNilaiPersepsiPerUnit / count($respondens)
-      ];
-    }
-
-    foreach ($data as $key => $value) {
-      $data[$key] = (object) [
-        'question' => $value->question,
-        'totalNilaiPersepsiPerUnit' => $value->totalNilaiPersepsiPerUnit,
-        'NRRPerUnsur' => $value->NRRPerUnsur,
-        'NRRTertimbangUnsur' => $value->NRRPerUnsur * $bobotNilaiTertimbang
-      ];
-    }
-
-    $IKM = 0;
-    foreach ($data as $value) {
-      $IKM += $value->NRRTertimbangUnsur;
-    }
-
+    $IKM = collect($data)->sum('NRRTertimbangUnsur');
     $konversiIKM = $IKM * 25;
 
     return [
-      'data' => $data,
-      'IKM' => $IKM,
-      'konversiIKM' => $konversiIKM,
-      'bobotNilaiTertimbang' => $bobotNilaiTertimbang
+        'data' => $data,
+        'IKM' => $IKM,
+        'konversiIKM' => $konversiIKM,
+        'bobotNilaiTertimbang' => $bobotNilaiTertimbang,
     ];
   }
+}
+
+if (!function_exists('generateColorClass')) {
+    function generateColorClass(string $seed)
+    {
+        $hash = crc32($seed);
+        $colors = [
+            'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+            'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+            'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+            'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300',
+            'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300',
+            'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-300',
+        ];
+        $index = abs($hash) % count($colors);
+        return $colors[$index];
+    }
 }

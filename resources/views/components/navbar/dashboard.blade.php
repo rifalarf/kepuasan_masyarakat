@@ -21,34 +21,59 @@
         </a>
       </div>
       <div class="flex items-center">
-        <div class="flex items-center ml-3">
-          <div>
-            <button type="button"
-              class="flex text-sm bg-gray-800 rounded-full focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600"
-              aria-expanded="false" data-dropdown-toggle="dropdown-user">
-              <span class="sr-only">Open user menu</span>
-              <img class="w-8 h-8 rounded-full" src="{{ asset('assets/ava.png') }}"
-                alt="user photo">
-            </button>
-          </div>
-          <div
-            class="z-50 hidden my-4 text-base list-none bg-white divide-y divide-gray-100 rounded shadow dark:bg-gray-700 dark:divide-gray-600"
-            id="dropdown-user">
-            <div class="px-4 py-3" role="none">
-              <p class="text-sm text-gray-900 dark:text-white" role="none">
-                {{ auth()->user()->name }}
-              </p>
-              <p class="text-sm font-medium text-gray-900 truncate dark:text-gray-300" role="none">
-                {{ auth()->user()->email }}
-              </p>
+        <div class="flex items-center">
+          <div class="ms-3 flex items-center">
+            @php
+              $user = auth()->user();
+              $statusText = '';
+              $statusClass = '';
+
+              if ($user->role === 'admin') {
+                  $statusText = 'Admin Utama';
+                  // Warna Abu-abu untuk Admin Utama
+                  $statusClass = 'bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+              } elseif ($user->role === 'satker' && $user->village) {
+                  $statusText = 'Admin ' . $user->village->name;
+                  // Warna Biru untuk semua Admin Satker
+                  $statusClass = 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+              }
+            @endphp
+
+            @if ($statusText)
+              <span
+                class="me-3 hidden rounded px-2.5 py-1 text-sm font-semibold sm:block {{ $statusClass }}">{{ $statusText }}</span>
+            @endif
+            <div>
+              <button type="button"
+                class="flex rounded-full bg-gray-800 text-sm focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600"
+                aria-expanded="false" data-dropdown-toggle="dropdown-user">
+                <span class="sr-only">Open user menu</span>
+                <img class="w-8 h-8 rounded-full" src="{{ asset('assets/ava.png') }}"
+                  alt="user photo">
+              </button>
             </div>
-            <ul class="py-1" role="none">
-              <li>
-                <a href="{{ route('auth.logout') }}"
-                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white"
-                  role="menuitem">Logout</a>
-              </li>
-            </ul>
+            <div
+              class="z-50 hidden my-4 text-base list-none bg-white divide-y divide-gray-100 rounded shadow dark:bg-gray-700 dark:divide-gray-600"
+              id="dropdown-user">
+              <div class="px-4 py-3" role="none">
+                <p class="text-sm text-gray-900 dark:text-white" role="none">
+                  {{ auth()->user()->name }}
+                </p>
+                <p class="text-sm font-medium text-gray-900 truncate dark:text-gray-300" role="none">
+                  {{ auth()->user()->email }}
+                </p>
+              </div>
+              <ul class="py-1" role="none">
+                <li>
+                  <form method="POST" action="{{ route('auth.logout') }}">
+                    @csrf
+                    <button type="submit"
+                      class="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 dark:hover:text-white"
+                      role="menuitem">Logout</button>
+                  </form>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>

@@ -1,165 +1,180 @@
 <!DOCTYPE html>
 <html lang="en">
 
-	<head>
-		<meta charset="UTF-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<meta http-equiv="X-UA-Compatible" content="ie=edge">
-		<title>Indeks Kepuasan Masyarakat</title>
-		<style>
-			.chart-container {
-				text-align: center;
-			}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Laporan Indeks Kepuasan Masyarakat</title>
+    <style>
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-size: 11px;
+            color: #333;
+        }
 
-			.chart-img {
-				max-width: 50%;
-				margin: 0 auto;
-				display: block;
-			}
+        .header-table {
+            width: 100%;
+            border-bottom: 2px solid #000;
+            margin-bottom: 15px;
+        }
 
-			table {
-				font-size: .8rem;
-			}
+        .header-table td {
+            padding: 5px;
+            vertical-align: middle;
+        }
 
-			table td,
-			table th {
-				text-align: left;
-			}
+        .logo {
+            width: 60px;
+        }
 
-			.title {
-				text-align: center;
-				margin: 20px 0;
-			}
+        .header-text {
+            text-align: center;
+        }
 
-			.text-md {
-				font-size: 1.1rem;
-			}
+        .header-text h1 {
+            font-size: 16px;
+            margin: 0;
+            text-transform: uppercase;
+        }
 
-			.table {
-				width: 100%;
-				border-collapse: collapse;
-			}
+        .header-text p {
+            margin: 4px 0;
+            font-size: 11px;
+        }
 
-			.table tr>th,
-			.table tr>td {
-				border: 1px solid black;
-				padding: 5px;
-				text-align: center;
-			}
-		</style>
-	</head>
+        .title {
+            text-align: center;
+            margin: 15px 0;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            line-height: 1.5;
+        }
 
-	<body>
-		<div>
-			<table style="border-bottom: 1px solid black; width: 100%; text-align: center;">
-				<tr>
-					<td style="vertical-align: middle; width: 15%;">
-						<img src="{{ public_path('assets/logo.png') }}" alt="Logo">
-					</td>
-					<td style="vertical-align: middle; line-height: 1.5;">
-						<div style="text-align: center;">
-							<h4 style="font-size: 1.2rem; margin: 0;">DINAS KOMUNIKASI DAN INFORMATIKA</h4>
-							<div style="margin: 5px 0;">KANTOR DISKOMINFO</div>
-							<div>Jl. Pramuka No.6, Pakuwon, Kec. Garut Kota, Kabupaten Garut, Jawa Barat 44117</div>
-						</div>
-					</td>
-					<td style="width: 15%;"></td>
-				</tr>
-			</table>
-			<div class="title">
-				<span class="text-md">LAPORAN TABEL HASIL SURVEI KEPUASAN MASYARAKAT <br>
-					KANTOR DISKOMINFO <br>
-					KABUPATEN GARUT</span>
-				</span>
-			</div>
-		</div>
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
 
-		<table class="table" style="margin-top: 25px;">
-			<thead class="bg-blue-100 text-xs uppercase text-gray-700 dark:bg-gray-700 dark:text-gray-400">
-				<tr>
-					<th scope="col" class="px-6 py-3">
-						Pertanyaan
-					</th>
-					<th scope="col" class="px-6 py-3">
-						Jumlah Nilai/Unsur
-					</th>
-					<th scope="col" class="px-6 py-3">
-						NRR/Unsur
-					</th>
-					<th scope="col" class="px-6 py-3">
-						Bobot Nilai Tertimbang
-					</th>
-					<th scope="col" class="px-6 py-3">
-						NRR Tertimbang/Unsur
-					</th>
-				</tr>
-			</thead>
-			<tbody>
-				@foreach ($data as $item)
-					<tr class="border-b bg-white hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-600">
-						<td scope="row" class="px-6 py-4 text-gray-900 dark:text-white">
-							{{ $item->question }}
-						</td>
-						<td scope="row" class="px-6 py-4 text-gray-900 dark:text-white">
-							{{ number_format($item->totalNilaiPersepsiPerUnit, 2) }}
-						</td>
-						<td scope="row" class="px-6 py-4 text-gray-900 dark:text-white">
-							{{ number_format($item->NRRPerUnsur, 2) }}
-						</td>
-						<td scope="row" class="px-6 py-4 text-gray-900 dark:text-white">
-							{{ number_format($bobotNilaiTertimbang, 2) }}
-						</td>
-						<td scope="row" class="px-6 py-4 text-gray-900 dark:text-white">
-							{{ number_format($item->NRRTertimbangUnsur, 2) }}
-						</td>
-					</tr>
-				@endforeach
-				<tr class="border-b bg-gray-50 font-bold">
-					<td scope="row" colspan="4" class="border-r px-6 py-4 text-gray-900 dark:text-white">
-						IKM
-					</td>
-					<td scope="row" class="px-6 py-4 text-gray-900 dark:text-white">
-						{{ number_format($IKM, 2) }}
-					</td>
-				</tr>
-				<tr class="border-b bg-gray-50 font-bold">
-					<td scope="row" colspan="4" class="border-r px-6 py-4 text-gray-900 dark:text-white">
-						Konversi IKM
-					</td>
-					<td scope="row" class="px-6 py-4 text-gray-900 dark:text-white">
-						{{ number_format($konversiIKM, 2) }}
-					</td>
-				</tr>
-				<tr class="border-b bg-gray-50 font-bold">
-					<td scope="row" colspan="4" class="border-r px-6 py-4 text-gray-900 dark:text-white">
-						Mutu Pelayanan (Hasil Penilaian)
-					</td>
-					<td scope="row" class="px-6 py-4 text-gray-900 dark:text-white">
-						{{ nilaPersepsi($konversiIKM)->mutu }}
-					</td>
-				</tr>
-				<tr class="border-b bg-gray-50 font-bold">
-					<td scope="row" colspan="4" class="border-r px-6 py-4 text-gray-900 dark:text-white">
-						Kinerja Unit Pelayanan
-					</td>
-					<td scope="row" class="px-6 py-4 text-gray-900 dark:text-white">
-						{{ nilaPersepsi($konversiIKM)->kinerja }}
-					</td>
-				</tr>
-			</tbody>
-		</table>
+        .table th,
+        .table td {
+            border: 1px solid #999;
+            padding: 6px;
+            text-align: left;
+        }
 
-		<table style="margin-top: 50px; width: 100%;">
-			<tr>
-				<td></td>
-				<td style="text-align: center; width: 40%;">
-					<div>Garut, {{ now()->format('d/m/Y') }}</div>
-					<div style="margin-bottom: 50px;">Kepala Diskominfo</div>
-					<div>Margiyanto, S.H</div>
-					<div>Nip.</div>
-				</td>
-			</tr>
-		</table>
-	</body>
+        .table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .table .center {
+            text-align: center;
+        }
+
+        .table .font-bold {
+            font-weight: bold;
+        }
+
+        .signature-table {
+            width: 100%;
+            margin-top: 40px;
+            page-break-inside: avoid;
+        }
+
+        .signature-table td {
+            text-align: center;
+        }
+
+        .signature-space {
+            height: 50px;
+        }
+    </style>
+</head>
+
+<body>
+    <table class="header-table">
+        <tr>
+            <td style="width: 15%; text-align: center;">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/d/d4/Lambang_Kabupaten_Garut.svg" alt="Logo"
+                    class="logo">
+            </td>
+            <td class="header-text">
+                <h1>Pemerintah Kabupaten Garut</h1>
+                <h1>Dinas Komunikasi dan Informatika</h1>
+                <p>Jl. Pramuka No.6, Pakuwon, Kec. Garut Kota, Kabupaten Garut, Jawa Barat 44117</p>
+            </td>
+            <td style="width: 15%;"></td>
+        </tr>
+    </table>
+
+    <div class="title">
+        Laporan Hasil Survei Kepuasan Masyarakat<br>
+        Satuan Kerja: {{ strtoupper($villageName) }}
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Pertanyaan</th>
+                <th class="center" style="width: 15%;">Jumlah Nilai/Unsur</th>
+                <th class="center" style="width: 12%;">NRR/Unsur</th>
+                <th class="center" style="width: 12%;">Bobot</th>
+                <th class="center" style="width: 15%;">NRR Tertimbang</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse ($data as $item)
+                <tr>
+                    <td>{{ $item->question }}</td>
+                    <td class="center">{{ number_format($item->totalNilaiPersepsiPerUnit, 2) }}</td>
+                    <td class="center">{{ number_format($item->NRRPerUnsur, 2) }}</td>
+                    <td class="center">{{ number_format($bobotNilaiTertimbang, 2) }}</td>
+                    <td class="center">{{ number_format($item->NRRTertimbangUnsur, 2) }}</td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="5" class="center">Data tidak ditemukan.</td>
+                </tr>
+            @endforelse
+
+            {{-- Summary Rows --}}
+            @if (!empty($data))
+                <tr class="font-bold">
+                    <td colspan="4">IKM</td>
+                    <td class="center">{{ number_format($IKM, 2) }}</td>
+                </tr>
+                <tr class="font-bold">
+                    <td colspan="4">Konversi IKM</td>
+                    <td class="center">{{ number_format($konversiIKM, 2) }}</td>
+                </tr>
+                <tr class="font-bold">
+                    <td colspan="4">Mutu Pelayanan (Hasil Penilaian)</td>
+                    <td class="center">{{ nilaPersepsi($konversiIKM)->mutu }}</td>
+                </tr>
+                <tr class="font-bold">
+                    <td colspan="4">Kinerja Unit Pelayanan</td>
+                    <td class="center">{{ nilaPersepsi($konversiIKM)->kinerja }}</td>
+                </tr>
+            @endif
+        </tbody>
+    </table>
+
+    <table class="signature-table">
+        <tr>
+            <td style="width: 60%;"></td>
+            <td style="width: 40%;">
+                <div>Garut, {{ now()->translatedFormat('d F Y') }}</div>
+                <div>Kepala Diskominfo</div>
+                <div class="signature-space"></div>
+                <div>Margiyanto, S.H</div>
+                <div>Nip.</div>
+            </td>
+        </tr>
+    </table>
+</body>
 
 </html>

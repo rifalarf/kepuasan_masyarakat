@@ -60,7 +60,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="py-5 text-center italic text-red-500">Data Admin Satker Kosong</td>
+                            <td colspan="4" class="py-5 text-center italic text-red-500">Data Kosong</td>
                         </tr>
                     @endforelse
                 </tbody>

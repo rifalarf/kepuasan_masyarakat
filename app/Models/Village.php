@@ -4,15 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Ramsey\Uuid\Uuid;
 
 class Village extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'satker_type_id'];
+    protected $guarded = ['id'];
 
     public function getRouteKeyName(): string
     {
@@ -27,18 +27,27 @@ class Village extends Model
         });
     }
 
-    public function villages(): HasMany
-    {
-        return $this->hasMany(Village::class);
-    }
-
-    public function satkerType()
+    public function satkerType(): BelongsTo
     {
         return $this->belongsTo(SatkerType::class);
     }
 
-    public function answers(): HasMany
+    public function users(): HasMany
     {
-        return $this->hasMany(Answer::class);
+        return $this->hasMany(User::class);
+    }
+
+    public function respondens(): HasMany
+    {
+        return $this->hasMany(Responden::class);
+    }
+
+    /**
+     * TAMBAHKAN METHOD INI
+     * Mendefinisikan relasi "has many" ke Kuesioner.
+     */
+    public function kuesioners(): HasMany
+    {
+        return $this->hasMany(Kuesioner::class);
     }
 }

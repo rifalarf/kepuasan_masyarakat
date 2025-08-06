@@ -89,38 +89,58 @@ class IndexController extends Controller
     public function kuesioner(Request $request)
     {
         try {
-            $step = $request->get('step');
+            $step = $request->get('step', 1);
             $question = $request->get('question');
-
-            if (!$step) {
-                return redirect()
-                    ->route('kuesioner', ['step' => 1]);
-            }
 
             $kuesioner = Kuesioner::all();
             $totalKuesioner = count($kuesioner);
 
-            if(count($kuesioner) === 0) {
-                throw new \Error('Maaf, kuesioner belum tersedia');
+            if (count($kuesioner) === 0) {
+                return redirect()->route('index')->withErrors(['message' => 'Maaf, kuesioner belum tersedia.']);
             }
 
             if ($step == 1) {
-                $villages = Village::all();
-                return view('pages.public.kuesioner', compact('step', 'totalKuesioner', 'villages'));
+                $villages = Village::orderBy('name')->get();
+                $genders = [
+                    (object) ['value' => 'Laki-laki', 'label' => 'Laki-laki'],
+                    (object) ['value' => 'Perempuan', 'label' => 'Perempuan'],
+                ];
+                $educations = [
+                    (object) ['value' => 'SD', 'label' => 'Sekolah Dasar (SD)'],
+                    (object) ['value' => 'SMP', 'label' => 'Sekolah Menengah Pertama (SMP)'],
+                    (object) ['value' => 'SMA', 'label' => 'Sekolah Menengah Atas (SMA)'],
+                    (object) ['value' => 'D3', 'label' => 'Diploma Tiga (D3)'],
+                    (object) ['value' => 'D4', 'label' => 'Diploma Empat (D4)'],
+                    (object) ['value' => 'S1', 'label' => 'Sarjana (S1)'],
+                    (object) ['value' => 'S2', 'label' => 'Magister (S2)'],
+                    (object) ['value' => 'S3', 'label' => 'Doktor (S3)'],
+                ];
+                $jobs = [
+                    (object) ['value' => 'Pelajar/Mahasiswa', 'label' => 'Pelajar/Mahasiswa'],
+                    (object) ['value' => 'PNS', 'label' => 'PNS'],
+                    (object) ['value' => 'TNI', 'label' => 'TNI'],
+                    (object) ['value' => 'Polisi', 'label' => 'Polisi'],
+                    (object) ['value' => 'Swasta', 'label' => 'Swasta'],
+                    (object) ['value' => 'Wirausaha', 'label' => 'Wirausaha'],
+                    (object) ['value' => 'Lainnya', 'label' => 'Lainnya'],
+                ];
+                $domiciles = [
+                    (object) ['value' => 'Garut', 'label' => 'Garut'],
+                    (object) ['value' => 'Luar Garut', 'label' => 'Luar Garut'],
+                ];
+
+                return view('pages.public.kuesioner', compact('step', 'totalKuesioner', 'villages', 'genders', 'educations', 'jobs', 'domiciles'));
             }
 
             if ($step == 2) {
                 $data = $request->all();
 
-                // --- PERUBAHAN KRUSIAL ---
-                // Ambil kuesioner berdasarkan Satuan Kerja yang dipilih di step 1
                 $kuesioner = Kuesioner::where('village_id', $data['village'])->get();
                 $totalKuesioner = $kuesioner->count();
 
                 if ($totalKuesioner == 0) {
                     return redirect()->route('index')->withErrors(['message' => 'Mohon maaf, kuesioner untuk Satuan Kerja yang Anda pilih belum tersedia.']);
                 }
-                // --- AKHIR PERUBAHAN ---
 
                 $question = (int) $request->question;
 
@@ -133,38 +153,39 @@ class IndexController extends Controller
                     'job' => 'required',
                     'village' => 'required',
                     'domicile' => 'required',
-                    'email' => 'required|email', // Tambahkan validasi email
+                    'name' => 'required',
+                    'phone' => 'required',
                 ]);
 
                 if ($validator->fails()) {
-                    return redirect()->back()->withInput()->withErrors($validator);
-                }
-
-                $semuaPertanyaanTerisi = true;
-                for ($i = 1; $i <= $totalKuesioner; $i++) {
-                    $questionKey = "question" . $i;
-                    if (!isset($data[$questionKey]) || empty($data[$questionKey])) {
-                        if($question == count($kuesioner)+1) {
-                            throw new \Error('Isi semua kuesioner!');
-                        };
-                        $semuaPertanyaanTerisi = false;
-                        break;
-                    }
-                }
-
-                if ($semuaPertanyaanTerisi) {
-                    $data['step'] = 3;
-                    $step = $data['step'];
                     return redirect()
-                        ->route('kuesioner', compact('kuesioner', 'data', 'step'));
+                        ->back()
+                        ->withInput()
+                        ->withErrors($validator);
+                }
+
+                if ($question > $totalKuesioner) {
+                    unset($data['question']);
+                    return redirect(url('/kuesioner?step=3&' . http_build_query($data)));
                 }
 
                 $kuesioner = $kuesioner[$question - 1];
 
-                $data['question'] = $question - 1;
-                $previous = $question == 1 ? '#' : route('kuesioner', $data);
-                $data['question'] = $question + 1;
-                $next = $question == $totalKuesioner ? '#' : route('kuesioner', $data);
+                // Logic for Previous Button
+                $prevData = $data;
+                $prevData['question'] = $question - 1;
+                $previous = $question == 1 ? '#' : url('/kuesioner?' . http_build_query($prevData));
+
+                // Logic for Next Button/Action
+                $nextData = $data;
+                if ($question < $totalKuesioner) {
+                    $nextData['question'] = $question + 1;
+                    $next = url('/kuesioner?' . http_build_query($nextData));
+                } else {
+                    unset($nextData['question']);
+                    $nextData['step'] = 3;
+                    $next = url('/kuesioner?' . http_build_query($nextData));
+                }
 
                 return view('pages.public.kuesioner', compact('kuesioner', 'totalKuesioner', 'step', 'next', 'previous', 'question', 'data'));
             }
@@ -176,8 +197,7 @@ class IndexController extends Controller
                 return view('pages.public.kuesioner', compact('kuesioner', 'data', 'step'));
             }
 
-            return redirect()
-                ->route('kuesioner', ['step' => 1]);
+            return redirect('/kuesioner?step=1');
         } catch (\Throwable $th) {
             return redirect()
                 ->back()

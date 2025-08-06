@@ -3,15 +3,45 @@
 namespace App\Http\Controllers;
 
 use App\Models\Feedback;
+use App\Models\Unsur;
+use App\Models\Village;
 use Illuminate\Http\Request;
 
 class FeedbackController extends Controller
 {
     public function index(Request $request)
     {
-        $data = Feedback::latest()->paginate(5);
+        // Memulai query dengan eager loading untuk optimasi
+        $query = Feedback::with(['responden.village', 'responden.answers.kuesioner.unsur']);
 
-        $feedbacks = Feedback::all();
+        // --- FILTER ---
+        // Filter berdasarkan peran
+        if (auth()->user()->role === 'satker') {
+            $query->whereHas('responden', function ($q) {
+                $q->where('village_id', auth()->user()->village_id);
+            });
+        }
+
+        // Filter berdasarkan Satuan Kerja (hanya untuk admin)
+        if (auth()->user()->role === 'admin' && $request->filled('village_id')) {
+            $query->whereHas('responden', function ($q) use ($request) {
+                $q->where('village_id', $request->village_id);
+            });
+        }
+
+        // Filter berdasarkan Unsur Pelayanan
+        if ($request->filled('unsur_id')) {
+            $query->whereHas('responden.answers.kuesioner', function ($q) use ($request) {
+                $q->where('unsur_id', $request->unsur_id);
+            });
+        }
+        // --- END FILTER ---
+
+        // Ambil data untuk ditampilkan di tabel dengan paginasi
+        $data = $query->clone()->latest()->paginate(10);
+
+        // Ambil semua data yang sudah difilter untuk analisis keyword
+        $feedbacks = $query->get();
         $keywordsCount = [];
         $ignoredWords = [
             'saya', 'aku', 'kamu', 'dia', 'mereka',
@@ -61,6 +91,13 @@ class FeedbackController extends Controller
             $topKeywords = array_slice($topKeywords, $startIndex, $itemsPerPage);
         }
 
-        return view('pages.dashboard.feedback.index', compact('data', 'topKeywords'));
+        // Data untuk dropdown filter
+        $unsurs = Unsur::orderBy('unsur')->get();
+        $villages = [];
+        if (auth()->user()->role === 'admin') {
+            $villages = Village::orderBy('name')->get();
+        }
+
+        return view('pages.dashboard.feedback.index', compact('data', 'topKeywords', 'unsurs', 'villages'));
     }
 }
