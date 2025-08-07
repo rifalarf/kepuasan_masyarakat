@@ -85,7 +85,6 @@ if (!function_exists('getIKM')) {
     $allAnswers = $respondens->pluck('answers')->flatten();
     $answersByKuesioner = $allAnswers->groupBy('kuesioner_id');
 
-    $totalResponden = $respondens->count();
     $totalKuesioner = $kuesioners->count();
     $bobotNilaiTertimbang = round(1 / $totalKuesioner, 2);
 
@@ -94,7 +93,14 @@ if (!function_exists('getIKM')) {
         $answersForThisKuesioner = $answersByKuesioner->get($kuesioner->id, collect());
         $totalNilaiPerUnsur = $answersForThisKuesioner->sum('answer');
         
-        $rataRataPerUnsur = $totalResponden > 0 ? $totalNilaiPerUnsur / $totalResponden : 0;
+        // --- PERBAIKAN UTAMA DI SINI ---
+        // Hitung jumlah responden yang benar-benar menjawab pertanyaan ini.
+        $jumlahPenjawab = $answersForThisKuesioner->count();
+
+        // Gunakan $jumlahPenjawab sebagai pembagi, bukan $totalResponden.
+        $rataRataPerUnsur = $jumlahPenjawab > 0 ? $totalNilaiPerUnsur / $jumlahPenjawab : 0;
+        // --- AKHIR PERBAIKAN ---
+
         $rataRataTertimbang = $rataRataPerUnsur * $bobotNilaiTertimbang;
 
         $data[] = (object) [
