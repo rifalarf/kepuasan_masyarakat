@@ -44,22 +44,22 @@
             series: [{
                     name: "Sangat Baik",
                     data: Object.values(answers.daily).map(day => day[3].total),
-                    color: "#1C64F2",
+                    color: answers.colors[3], // Menggunakan warna dari controller
                 },
                 {
                     name: "Baik",
                     data: Object.values(answers.daily).map(day => day[2].total),
-                    color: "#16BDCA",
+                    color: answers.colors[2], // Menggunakan warna dari controller
                 },
                 {
                     name: "Kurang Baik",
                     data: Object.values(answers.daily).map(day => day[1].total),
-                    color: "#FDBA8C",
+                    color: answers.colors[1], // Menggunakan warna dari controller
                 },
                 {
                     name: "Tidak Baik",
                     data: Object.values(answers.daily).map(day => day[0].total),
-                    color: "#F05252",
+                    color: answers.colors[0], // Menggunakan warna dari controller
                 },
             ],
             legend: {

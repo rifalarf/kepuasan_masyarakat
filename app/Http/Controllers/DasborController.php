@@ -227,6 +227,15 @@ class DasborController extends Controller
             'amber' => '#FFC107'
         ];
 
+        // --- PERBAIKAN: Gunakan sintaks objek untuk menambahkan properti ---
+        $answers->colors = [
+            $colors->red,
+            $colors->orange,
+            $colors->yellow,
+            $colors->green,
+        ];
+        // --- AKHIR PERBAIKAN ---
+
         $dataGrafikJenisKelamin = (object) [
             'series' => [
                 (int) number_format(getPercentage($dataRespondens->where('gender', 'Laki-laki')->count(), $dataRespondens->count()), 2),
