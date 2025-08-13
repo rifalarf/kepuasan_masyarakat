@@ -7,6 +7,18 @@
             'roles' => ['admin', 'satker'],
         ],
         (object) [
+            'name' => 'Admin Satker',
+            'link' => route('admin-satker.index'),
+            'icon' => '',
+            'roles' => ['admin'], // <-- Hanya untuk 'admin'
+        ],
+        (object) [
+            'name' => 'Satuan Kerja',
+            'link' => route('village.index'),
+            'icon' => '',
+            'roles' => ['admin'], // <-- Hanya untuk 'admin'
+        ],
+        (object) [
             'name' => 'Kuesioner',
             'link' => route('kuesioner.index'),
             'icon' => '',
@@ -29,18 +41,6 @@
             'link' => route('feedback.index'),
             'icon' => '',
             'roles' => ['admin', 'satker'],
-        ],
-        (object) [
-            'name' => 'Satuan Kerja',
-            'link' => route('village.index'),
-            'icon' => '',
-            'roles' => ['admin'], // <-- Hanya untuk 'admin'
-        ],
-        (object) [
-            'name' => 'Admin Satker',
-            'link' => route('admin-satker.index'),
-            'icon' => '',
-            'roles' => ['admin'], // <-- Hanya untuk 'admin'
         ],
     ];
 
