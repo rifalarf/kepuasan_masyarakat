@@ -106,7 +106,7 @@ class SurveyController extends Controller
     {
         $request->validate([
             'village_id' => 'required|exists:villages,id',
-            'unsur_id' => 'required|exists:unsurs,id', // Tambahkan validasi untuk unsur_id
+            'unsur_id' => 'required|exists:unsurs,id',
         ]);
 
         if (!session()->has('survey_personal_data')) {
@@ -133,19 +133,36 @@ class SurveyController extends Controller
      */
     public function storeSurvey(Request $request)
     {
-        $request->validate([
-            'village_id' => 'required|exists:villages,id',
-            'answers' => 'required|array',
-            'answers.*.kuesioner_id' => 'required|exists:kuesioners,id',
-            'answers.*.answer' => 'required|integer|min:1|max:4',
-        ]);
-
-        $personalData = session('survey_personal_data');
-        if (!$personalData) {
+        if (!session()->has('survey_personal_data')) {
             return redirect()->route('survey.start')->withErrors(['message' => 'Sesi Anda telah berakhir. Silakan mulai kembali.']);
         }
 
-        // Buat Responden tanpa 'name' dan 'phone'
+        // --- PERBAIKAN LOGIKA VALIDASI ---
+        // 1. Hitung berapa banyak kuesioner yang seharusnya ada di halaman.
+        $expectedKuesionerCount = Kuesioner::where('village_id', $request->village_id)
+            ->where('unsur_id', $request->unsur_id)
+            ->count();
+
+        // 2. Buat aturan validasi yang benar.
+        $validator = Validator::make($request->all(), [
+            'village_id' => 'required|exists:villages,id',
+            'unsur_id' => 'required|exists:unsurs,id',
+            'answers' => ['required', 'array', "size:{$expectedKuesionerCount}"],
+            'answers.*.kuesioner_id' => 'required|exists:kuesioners,id',
+            'answers.*.answer' => 'required|integer|min:1|max:4',
+        ], [
+            'answers.size' => 'Peringatan: Harap jawab semua pertanyaan sebelum melanjutkan.',
+            'answers.required' => 'Peringatan: Harap jawab semua pertanyaan sebelum melanjutkan.',
+            'answers.*.answer.required' => 'Setiap pertanyaan wajib diisi.',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+        // --- AKHIR PERBAIKAN ---
+
+        $personalData = session('survey_personal_data');
+
         $responden = Responden::create([
             'email' => $personalData['email'],
             'gender' => $personalData['gender'],

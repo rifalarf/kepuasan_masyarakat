@@ -1,4 +1,3 @@
-
 {{-- filepath: resources/views/pages/public/survey-step3.blade.php --}}
 @extends('layouts.public')
 @section('title', 'Langkah 3: Isi Kuesioner')
@@ -18,9 +17,21 @@
                     </p>
                 </div>
 
+                @if ($errors->any())
+                    <div class="mb-4 rounded-lg bg-red-100 p-4 text-red-700">
+                        <ul class="list-disc pl-5">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
                 <form action="{{ route('survey.store') }}" method="POST">
                     @csrf
                     <input type="hidden" name="village_id" value="{{ $village->id }}">
+                    {{-- TAMBAHKAN BARIS INI untuk membawa unsur_id --}}
+                    <input type="hidden" name="unsur_id" value="{{ request('unsur_id') }}">
 
                     <div class="space-y-8">
                         @foreach ($kuesioners as $index => $kuesioner)

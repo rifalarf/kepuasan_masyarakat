@@ -5,34 +5,36 @@
         <div class="mx-auto grid min-h-screen max-w-screen-xl items-center px-4 py-8">
             <div class="rounded-lg border border-gray-200 bg-white p-8 shadow-lg dark:border-gray-700 dark:bg-gray-800">
                 <h2 class="mb-2 text-2xl font-bold text-gray-900 dark:text-white">Pilih Layanan</h2>
-                <p class="mb-6 text-gray-500 dark:text-gray-400">Pilih Satuan Kerja dan Unsur Pelayanan yang ingin Anda berikan penilaian.</p>
+                <p class="mb-8 text-gray-500 dark:text-gray-400">
+        Pilih satuan kerja dan unsur pelayanan yang ingin Anda nilai.
+    </p>
 
-                <form action="{{ route('survey.step3') }}" method="POST" id="selection-form">
-                    @csrf
-                    <div class="mb-5">
-                        <label for="village_id" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">1. Pilih Satuan Kerja</label>
-                        {{-- HAPUS CLASS 'searchable-select' DARI SINI --}}
-                        <select id="village_id" name="village_id" class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500" required>
-                            <option value="" hidden>- Pilih Satuan Kerja -</option>
-                            @foreach ($villages as $village)
-                                <option value="{{ $village->id }}">{{ $village->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
+    {{-- PERBAIKAN: Ubah method menjadi GET dan hapus @csrf --}}
+    <form action="{{ route('survey.step3') }}" method="GET" class="space-y-6">
+        <div>
+            <label for="village_id" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Pilih Satuan Kerja</label>
+            {{-- HAPUS CLASS 'searchable-select' DARI SINI --}}
+            <select id="village_id" name="village_id" class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500" required>
+                <option value="" hidden>- Pilih Satuan Kerja -</option>
+                @foreach ($villages as $village)
+                    <option value="{{ $village->id }}">{{ $village->name }}</option>
+                @endforeach
+            </select>
+        </div>
 
-                    <div class="mb-5">
-                        <label for="unsur_id" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">2. Pilih Unsur Pelayanan</label>
-                        <select id="unsur_id" name="unsur_id" class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500" disabled required>
-                            <option value="" hidden>- Pilih Unsur Pelayanan -</option>
-                        </select>
-                        <p id="unsur-status" class="mt-2 text-sm text-gray-500"></p>
-                    </div>
+        <div>
+            <label for="unsur_id" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Pilih Unsur Pelayanan</label>
+            <select id="unsur_id" name="unsur_id" class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500" disabled required>
+                <option value="" hidden>- Pilih Unsur Pelayanan -</option>
+            </select>
+            <p id="unsur-status" class="mt-2 text-sm text-gray-500"></p>
+        </div>
 
-                    <div class="mt-8 text-right">
-                        <x-button.submit text="Mulai Isi Kuesioner" id="submit-button" class="hidden" />
-                    </div>
-                </form>
-            </div>
+        <div class="mt-8 text-right">
+            <x-button.submit text="Mulai Isi Kuesioner" id="submit-button" class="hidden" />
+        </div>
+    </form>
+</div>
         </div>
     </section>
 @endsection

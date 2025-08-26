@@ -26,7 +26,7 @@ Route::get('/', [IndexController::class, 'index'])->name('index');
 Route::get('/survei/mulai', [SurveyController::class, 'showStep1'])->name('survey.start');
 Route::post('/survei/simpan-data-diri', [SurveyController::class, 'storeStep1'])->name('survey.store.personal_info'); // <-- UBAH NAMA DI SINI
 Route::get('/survei/pilih-unit', [SurveyController::class, 'showStep2'])->name('survey.step2');
-Route::post('/survei/tampilkan-kuesioner', [SurveyController::class, 'showStep3'])->name('survey.step3');
+Route::get('/survei/tampilkan-kuesioner', [SurveyController::class, 'showStep3'])->name('survey.step3');
 Route::post('/survei/simpan-jawaban', [SurveyController::class, 'storeSurvey'])->name('survey.store');
 
 
