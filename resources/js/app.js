@@ -42,19 +42,23 @@ function setupDynamicQuestionForms() {
     const container = document.getElementById('questions-container');
     const addButton = document.getElementById('add-question-btn');
 
-    // Hanya jalankan skrip jika elemen-elemen ini ada di halaman
     if (!container || !addButton) {
+        console.log('Dynamic question form elements not found');
         return;
     }
 
     const updateLabels = () => {
         const items = container.querySelectorAll('.question-item');
         items.forEach((item, index) => {
-            item.querySelector('label').textContent = `Pertanyaan ${index + 1}`;
+            const label = item.querySelector('label');
+            if (label) {
+                label.textContent = `Pertanyaan ${index + 1}`;
+            }
         });
     };
 
     addButton.addEventListener('click', () => {
+        console.log('Menambahkan pertanyaan baru');
         const newItem = document.createElement('div');
         newItem.classList.add('question-item', 'mt-4');
         newItem.innerHTML = `
@@ -68,12 +72,14 @@ function setupDynamicQuestionForms() {
         `;
         container.appendChild(newItem);
         updateLabels();
+        console.log('Pertanyaan baru berhasil ditambahkan');
     });
 
     container.addEventListener('click', function(e) {
         if (e.target.closest('.remove-question-btn')) {
             e.target.closest('.question-item').remove();
             updateLabels();
+            console.log('Pertanyaan berhasil dihapus');
         }
     });
 }

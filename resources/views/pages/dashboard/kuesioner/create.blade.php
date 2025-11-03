@@ -46,6 +46,31 @@
                     </div>
                 @endif
 
+                <div class="mb-3 grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div>
+                        <label for="start_date" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+                            Tanggal Mulai (Opsional)
+                        </label>
+                        <input type="date" name="start_date" id="start_date" value="{{ old('start_date') }}"
+                            class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                        <p class="mt-1 text-xs text-gray-500">Kosongkan jika ingin langsung aktif</p>
+                        @error('start_date')
+                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div>
+                        <label for="end_date" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+                            Tanggal Berakhir (Opsional)
+                        </label>
+                        <input type="date" name="end_date" id="end_date" value="{{ old('end_date') }}"
+                            class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                        <p class="mt-1 text-xs text-gray-500">Kosongkan jika tidak ada batas waktu</p>
+                        @error('end_date')
+                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
+
                 {{-- Kontainer untuk pertanyaan dinamis --}}
                 <div id="questions-container" class="space-y-4">
                     <div class="question-item">

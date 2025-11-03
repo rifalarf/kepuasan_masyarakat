@@ -1,4 +1,3 @@
-
 @extends('layouts.dashboard', [
     'breadcrumbs' => [
         'Kuesioner' => '#',
@@ -59,6 +58,13 @@
                                     Satuan Kerja
                                 </th>
                             @endif
+                            {{-- TAMBAHKAN KOLOM INI --}}
+                            <th scope="col" class="px-6 py-3">
+                                Status
+                            </th>
+                            <th scope="col" class="px-6 py-3">
+                                Periode
+                            </th>
                             <th scope="col" class="px-6 py-3">
                                 Dibuat pada
                             </th>
@@ -92,6 +98,32 @@
                                             {{ $item->village->name ?? 'Global' }}
                                         </td>
                                     @endif
+                                    {{-- TAMBAHKAN CELL INI --}}
+                                    <td class="px-6 py-4">
+                                        @if($item->isActive())
+                                            <span class="rounded bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-300">
+                                                Aktif
+                                            </span>
+                                        @else
+                                            <span class="rounded bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900 dark:text-red-300">
+                                                Tidak Aktif
+                                            </span>
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-4 text-sm">
+                                        @if($item->start_date || $item->end_date)
+                                            <div class="text-gray-600 dark:text-gray-400">
+                                                @if($item->start_date)
+                                                    <div>Mulai: {{ \Carbon\Carbon::parse($item->start_date)->format('d M Y') }}</div>
+                                                @endif
+                                                @if($item->end_date)
+                                                    <div>Akhir: {{ \Carbon\Carbon::parse($item->end_date)->format('d M Y') }}</div>
+                                                @endif
+                                            </div>
+                                        @else
+                                            <span class="text-gray-400 italic">Tanpa batas</span>
+                                        @endif
+                                    </td>
                                     <td class="px-6 py-4">
                                         {{ $item->created_at->diffForHumans() }}
                                     </td>

@@ -43,6 +43,32 @@
                         </select>
                     </div>
                 @endif
+
+                <div class="mb-3 grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div>
+                        <label for="start_date" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+                            Tanggal Mulai
+                        </label>
+                        <input type="date" name="start_date" id="start_date" 
+                            value="{{ old('start_date', $kuesioner->start_date) }}"
+                            class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                        @error('start_date')
+                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div>
+                        <label for="end_date" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+                            Tanggal Berakhir
+                        </label>
+                        <input type="date" name="end_date" id="end_date" 
+                            value="{{ old('end_date', $kuesioner->end_date) }}"
+                            class="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white">
+                        @error('end_date')
+                            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
+
                 <div class="mb-4 w-full rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-600 dark:bg-gray-700">
                     <div class="flex items-center justify-between border-b px-3 py-2 dark:border-gray-600">
                         <div class="flex flex-wrap items-center divide-gray-200 dark:divide-gray-600 sm:divide-x">
