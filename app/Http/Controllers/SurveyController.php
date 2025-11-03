@@ -115,14 +115,15 @@ class SurveyController extends Controller
 
         $village = Village::findOrFail($request->village_id);
         
-        // Filter kuesioner berdasarkan village_id DAN unsur_id
+        // Filter kuesioner berdasarkan village_id, unsur_id, DAN status aktif
         $kuesioners = Kuesioner::where('village_id', $village->id)
             ->where('unsur_id', $request->unsur_id)
+            ->active() // Gunakan scope active
             ->orderBy('id')
             ->get();
 
         if ($kuesioners->isEmpty()) {
-            return redirect()->route('survey.step2')->withErrors(['message' => 'Maaf, kuesioner untuk unit dan unsur ini belum tersedia.']);
+            return redirect()->route('survey.step2')->withErrors(['message' => 'Maaf, kuesioner untuk unit dan unsur ini belum tersedia atau sudah berakhir.']);
         }
 
         return view('pages.public.survey-step3', compact('village', 'kuesioners'));

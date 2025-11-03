@@ -10,7 +10,9 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::get('/kuesioner/{village_id}', function ($village_id) {
-    return Kuesioner::where('village_id', $village_id)->get();
+    return Kuesioner::where('village_id', $village_id)
+        ->active() // Filter hanya yang aktif
+        ->get();
 });
 
 Route::get('/villages-by-type/{satker_type_id}', function ($satker_type_id) {
@@ -23,15 +25,12 @@ Route::get('/villages-by-type/{satker_type_id}', function ($satker_type_id) {
 
 // GANTI LOGIKA LAMA DENGAN YANG BARU DAN LEBIH ANDAL INI
 Route::get('/unsurs-by-village/{village_id}', function ($village_id) {
-    // Langkah 1: Ambil semua ID unsur yang memiliki kuesioner untuk village_id yang dipilih.
-    // Ini akan mengambil ID dari unsur global maupun unsur spesifik.
     $relevantUnsurIds = Kuesioner::where('village_id', $village_id)
+        ->active() // TAMBAHKAN BARIS INI
         ->select('unsur_id')
         ->distinct()
         ->pluck('unsur_id');
 
-    // Langkah 2: Ambil data lengkap dari model Unsur berdasarkan ID yang sudah kita kumpulkan.
-    // Ini memastikan kita mendapatkan data yang benar, tidak peduli apakah village_id-nya NULL atau tidak.
     return Unsur::whereIn('id', $relevantUnsurIds)
         ->orderBy('unsur')
         ->get();
